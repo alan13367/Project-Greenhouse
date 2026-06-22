@@ -1,2 +1,11 @@
 .DS_Store
-docs/
+.build/
+apps/GreenhouseMac/.build/
+dist/
+*.xcuserstate
+xcuserdata/
+.codex/*
+!.codex/environments/
+.codex/environments/*
+!.codex/environments/environment.toml
+docs/roadmap.md

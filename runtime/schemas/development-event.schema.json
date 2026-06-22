@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://greenhouse.dev/schemas/development-event.schema.json",
+  "title": "Greenhouse Development Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "sequence",
+    "timestamp",
+    "source",
+    "level",
+    "name",
+    "message",
+    "attributes"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "level": {
+      "enum": ["debug", "info", "warning", "error"]
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)*$"
+    },
+    "message": {
+      "type": "string"
+    },
+    "attributes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "statePatch": {
+      "$ref": "#/$defs/statePatch"
+    },
+    "issue": {
+      "$ref": "#/$defs/issue"
+    }
+  },
+  "$defs": {
+    "progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fractionCompleted", "detail"],
+      "properties": {
+        "fractionCompleted": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "detail": {
+          "type": "string"
+        }
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "idle",
+            "preparingRuntime",
+            "startingAndroid",
+            "signingInToGoogle",
+            "installingFromPlay",
+            "installingApp",
+            "openingAppWindow",
+            "updatingRuntime",
+            "repairingRuntime",
+            "exportingDiagnostics"
+          ]
+        },
+        "progress": {
+          "$ref": "#/$defs/progress"
+        }
+      }
+    },
+    "appWindowPatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["appID", "state"],
+      "properties": {
+        "appID": {
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "closed",
+            "creatingDisplay",
+            "launchingTask",
+            "visible",
+            "backgrounded",
+            "reconnecting",
+            "failed"
+          ]
+        }
+      }
+    },
+    "statePatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runtimeInstallation": {
+          "enum": [
+            "missing",
+            "downloading",
+            "verifying",
+            "installing",
+            "ready",
+            "invalid",
+            "repairing",
+            "updating"
+          ]
+        },
+        "vmLifecycle": {
+          "enum": ["stopped", "starting", "running", "stopping", "crashed"]
+        },
+        "androidReadiness": {
+          "enum": ["unavailable", "booting", "connecting", "ready", "degraded"]
+        },
+        "googleServices": {
+          "enum": [
+            "notIncluded",
+            "initializing",
+            "signInRequired",
+            "ready",
+            "certificationError",
+            "unavailable"
+          ]
+        },
+        "currentOperation": {
+          "$ref": "#/$defs/operation"
+        },
+        "appWindow": {
+          "$ref": "#/$defs/appWindowPatch"
+        }
+      }
+    },
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "code",
+        "severity",
+        "summary",
+        "detail",
+        "recoveryAction"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "code": {
+          "type": "string"
+        },
+        "severity": {
+          "enum": ["notice", "warning", "error"]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "recoveryAction": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
