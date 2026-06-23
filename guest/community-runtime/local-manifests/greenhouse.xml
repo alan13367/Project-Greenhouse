@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <remote name="greenhouse-github" fetch="https://github.com/" />
+  <project
+    name="lineageos4microg/android_vendor_partner_gms"
+    path="vendor/partner_gms"
+    remote="greenhouse-github"
+    revision="bd95ffe12653c1e8e695c841efa847af06d32a15" />
+</manifest>

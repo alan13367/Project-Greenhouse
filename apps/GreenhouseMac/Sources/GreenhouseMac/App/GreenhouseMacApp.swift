@@ -1,12 +1,22 @@
 import AppKit
 import GreenhouseCore
+import GreenhouseRuntime
 import SwiftUI
 
 @main
 struct GreenhouseMacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @State private var model = GreenhouseAppModel(backend: FakeBackend())
+    @State private var model: GreenhouseAppModel
     @State private var appWindowCoordinator = AppWindowCoordinator()
+    private let streams: AppStreamRegistry
+
+    init() {
+        let runtime = GreenhouseRuntimeEnvironment.makeDefault()
+        streams = runtime.streams
+        _model = State(
+            initialValue: GreenhouseAppModel(backend: runtime.backend)
+        )
+    }
 
     var body: some Scene {
         WindowGroup("Greenhouse", id: "library") {
@@ -23,9 +33,10 @@ struct GreenhouseMacApp: App {
 
         WindowGroup("Android App", for: AndroidAppID.self) { $appID in
             if let appID, let app = model.app(for: appID) {
-                FakeAppWindowView(
+                AppWindowView(
                     app: app,
                     model: model,
+                    streams: streams,
                     appWindowCoordinator: appWindowCoordinator
                 )
             } else {

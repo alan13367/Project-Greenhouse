@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://greenhouse.dev/schemas/community-runtime-lock.schema.json",
+  "title": "Greenhouse Community Runtime Lock",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runtime",
+    "android",
+    "integration",
+    "packages"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "displayName",
+        "architecture",
+        "virtualHardware",
+        "engine",
+        "graphics"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9.-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "architecture": {
+          "const": "arm64"
+        },
+        "virtualHardware": {
+          "const": "goldfish-ranchu"
+        },
+        "engine": {
+          "const": "android-emulator"
+        },
+        "graphics": {
+          "const": "gfxstream-moltenvk"
+        }
+      }
+    },
+    "android": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "distribution",
+        "release",
+        "platform",
+        "manifestRepository",
+        "manifestBranch",
+        "manifestRevision",
+        "productBase",
+        "product",
+        "userdataPolicy"
+      ],
+      "properties": {
+        "distribution": {
+          "const": "LineageOS"
+        },
+        "release": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "manifestRepository": {
+          "type": "string",
+          "format": "uri"
+        },
+        "manifestBranch": {
+          "type": "string"
+        },
+        "manifestRevision": {
+          "$ref": "#/$defs/gitRevision"
+        },
+        "productBase": {
+          "const": "lineage_sdk_phone_arm64"
+        },
+        "product": {
+          "const": "greenhouse_sdk_phone_arm64"
+        },
+        "userdataPolicy": {
+          "const": "separate-persistent-image"
+        }
+      }
+    },
+    "integration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "revision",
+        "path",
+        "signatureSpoofingPolicy",
+        "fdroidRepositoryFingerprintSha256",
+        "officialGooglePlayIncluded"
+      ],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "format": "uri"
+        },
+        "revision": {
+          "$ref": "#/$defs/gitRevision"
+        },
+        "path": {
+          "const": "vendor/partner_gms"
+        },
+        "signatureSpoofingPolicy": {
+          "const": "restricted-system-only"
+        },
+        "fdroidRepositoryFingerprintSha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "officialGooglePlayIncluded": {
+          "const": false
+        }
+      }
+    },
+    "packages": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module",
+          "applicationId",
+          "version",
+          "versionCode",
+          "url",
+          "sha256",
+          "destination",
+          "license"
+        ],
+        "properties": {
+          "module": {
+            "type": "string"
+          },
+          "applicationId": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "versionCode": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "sha256": {
+            "$ref": "#/$defs/sha256"
+          },
+          "destination": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+\\.apk$"
+          },
+          "license": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "gitRevision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

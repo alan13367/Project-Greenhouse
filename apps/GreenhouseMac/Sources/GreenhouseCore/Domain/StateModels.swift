@@ -46,6 +46,12 @@ public enum GoogleServicesState: String, Codable, CaseIterable, Sendable {
     case unavailable
 }
 
+public enum GoogleServicesProvider: String, Codable, CaseIterable, Sendable {
+    case none
+    case microG
+    case licensedGMS
+}
+
 public enum AppWindowState: String, Codable, CaseIterable, Sendable {
     case closed
     case creatingDisplay
@@ -61,7 +67,7 @@ public enum CurrentOperation: Codable, Equatable, Sendable {
     case preparingRuntime(OperationProgress)
     case startingAndroid
     case signingInToGoogle
-    case installingFromPlay(OperationProgress)
+    case installingFromCommunityStore(OperationProgress)
     case installingApp(OperationProgress)
     case openingAppWindow
     case updatingRuntime(OperationProgress)
@@ -78,7 +84,7 @@ public enum CurrentOperation: Codable, Equatable, Sendable {
         case preparingRuntime
         case startingAndroid
         case signingInToGoogle
-        case installingFromPlay
+        case installingFromCommunityStore
         case installingApp
         case openingAppWindow
         case updatingRuntime
@@ -99,8 +105,10 @@ public enum CurrentOperation: Codable, Equatable, Sendable {
             self = .startingAndroid
         case .signingInToGoogle:
             self = .signingInToGoogle
-        case .installingFromPlay:
-            self = .installingFromPlay(try container.decode(OperationProgress.self, forKey: .progress))
+        case .installingFromCommunityStore:
+            self = .installingFromCommunityStore(
+                try container.decode(OperationProgress.self, forKey: .progress)
+            )
         case .installingApp:
             self = .installingApp(try container.decode(OperationProgress.self, forKey: .progress))
         case .openingAppWindow:
@@ -127,8 +135,8 @@ public enum CurrentOperation: Codable, Equatable, Sendable {
             try container.encode(Kind.startingAndroid, forKey: .kind)
         case .signingInToGoogle:
             try container.encode(Kind.signingInToGoogle, forKey: .kind)
-        case let .installingFromPlay(progress):
-            try container.encode(Kind.installingFromPlay, forKey: .kind)
+        case let .installingFromCommunityStore(progress):
+            try container.encode(Kind.installingFromCommunityStore, forKey: .kind)
             try container.encode(progress, forKey: .progress)
         case let .installingApp(progress):
             try container.encode(Kind.installingApp, forKey: .kind)
@@ -170,7 +178,8 @@ public struct AndroidAppID: RawRepresentable, Hashable, Codable, Sendable, Ident
 public struct AndroidApp: Identifiable, Codable, Equatable, Sendable {
     public enum Source: String, Codable, Sendable {
         case demo
-        case googlePlay
+        case communityStore
+        case systemService
         case localPackage
     }
 
@@ -210,12 +219,20 @@ public struct AndroidApp: Identifiable, Codable, Equatable, Sendable {
         source: .demo
     )
 
-    public static let googlePlay = AndroidApp(
-        id: AndroidAppID(rawValue: "system.google-play"),
-        name: "Google Play",
-        packageName: "com.android.vending",
-        symbolName: "bag.fill",
-        source: .googlePlay
+    public static let microGSettings = AndroidApp(
+        id: AndroidAppID(rawValue: "system.microg-settings"),
+        name: "microG Services",
+        packageName: "com.google.android.gms",
+        symbolName: "person.crop.circle.badge.checkmark",
+        source: .systemService
+    )
+
+    public static let fDroid = AndroidApp(
+        id: AndroidAppID(rawValue: "store.fdroid"),
+        name: "F-Droid",
+        packageName: "org.fdroid.fdroid",
+        symbolName: "shippingbox.circle.fill",
+        source: .communityStore
     )
 }
 
@@ -224,6 +241,7 @@ public struct GreenhouseSnapshot: Codable, Equatable, Sendable {
     public var vmLifecycle: VMLifecycleState
     public var androidReadiness: AndroidReadinessState
     public var googleServices: GoogleServicesState
+    public var googleServicesProvider: GoogleServicesProvider
     public var currentOperation: CurrentOperation
     public var appWindows: [AndroidAppID: AppWindowState]
 
@@ -232,6 +250,7 @@ public struct GreenhouseSnapshot: Codable, Equatable, Sendable {
         vmLifecycle: VMLifecycleState = .stopped,
         androidReadiness: AndroidReadinessState = .unavailable,
         googleServices: GoogleServicesState = .notIncluded,
+        googleServicesProvider: GoogleServicesProvider = .none,
         currentOperation: CurrentOperation = .idle,
         appWindows: [AndroidAppID: AppWindowState] = [:]
     ) {
@@ -239,6 +258,7 @@ public struct GreenhouseSnapshot: Codable, Equatable, Sendable {
         self.vmLifecycle = vmLifecycle
         self.androidReadiness = androidReadiness
         self.googleServices = googleServices
+        self.googleServicesProvider = googleServicesProvider
         self.currentOperation = currentOperation
         self.appWindows = appWindows
     }
@@ -259,6 +279,7 @@ public struct StatePatch: Codable, Equatable, Sendable {
     public var vmLifecycle: VMLifecycleState?
     public var androidReadiness: AndroidReadinessState?
     public var googleServices: GoogleServicesState?
+    public var googleServicesProvider: GoogleServicesProvider?
     public var currentOperation: CurrentOperation?
     public var appWindow: AppWindowPatch?
 
@@ -267,6 +288,7 @@ public struct StatePatch: Codable, Equatable, Sendable {
         vmLifecycle: VMLifecycleState? = nil,
         androidReadiness: AndroidReadinessState? = nil,
         googleServices: GoogleServicesState? = nil,
+        googleServicesProvider: GoogleServicesProvider? = nil,
         currentOperation: CurrentOperation? = nil,
         appWindow: AppWindowPatch? = nil
     ) {
@@ -274,6 +296,7 @@ public struct StatePatch: Codable, Equatable, Sendable {
         self.vmLifecycle = vmLifecycle
         self.androidReadiness = androidReadiness
         self.googleServices = googleServices
+        self.googleServicesProvider = googleServicesProvider
         self.currentOperation = currentOperation
         self.appWindow = appWindow
     }
@@ -292,6 +315,9 @@ public extension GreenhouseSnapshot {
         }
         if let googleServices = patch.googleServices {
             self.googleServices = googleServices
+        }
+        if let googleServicesProvider = patch.googleServicesProvider {
+            self.googleServicesProvider = googleServicesProvider
         }
         if let currentOperation = patch.currentOperation {
             self.currentOperation = currentOperation

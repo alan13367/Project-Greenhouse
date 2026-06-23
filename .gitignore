@@ -2,10 +2,10 @@
 .build/
 apps/GreenhouseMac/.build/
 dist/
+artifacts/
 *.xcuserstate
 xcuserdata/
 .codex/*
 !.codex/environments/
 .codex/environments/*
 !.codex/environments/environment.toml
-docs/roadmap.md

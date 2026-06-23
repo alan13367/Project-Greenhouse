@@ -39,19 +39,32 @@ public final class GreenhouseAppModel {
 
     public func startAndroid() async {
         await backend.startAndroid()
+        await refreshInstalledApps()
     }
 
     public func stopAndroid() async {
         await backend.requestShutdown()
     }
 
-    public func installPackage(named displayName: String) async {
-        guard let app = await backend.installPackage(named: displayName) else { return }
+    public func installPackage(at url: URL) async {
+        guard let app = await backend.installPackage(at: url) else { return }
         upsert(app)
     }
 
-    public func openGooglePlay() async -> AndroidApp? {
-        guard let app = await backend.openGooglePlay() else { return nil }
+    public func refreshInstalledApps() async {
+        for app in await backend.installedApps() {
+            upsert(app)
+        }
+    }
+
+    public func openGoogleServices() async -> AndroidApp? {
+        guard let app = await backend.openGoogleServices() else { return nil }
+        upsert(app)
+        return app
+    }
+
+    public func openCommunityStore() async -> AndroidApp? {
+        guard let app = await backend.openCommunityStore() else { return nil }
         upsert(app)
         return app
     }

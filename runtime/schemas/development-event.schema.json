@@ -17,7 +17,7 @@
   ],
   "properties": {
     "schemaVersion": {
-      "const": 1
+      "const": 2
     },
     "id": {
       "type": "string",
@@ -85,7 +85,7 @@
             "preparingRuntime",
             "startingAndroid",
             "signingInToGoogle",
-            "installingFromPlay",
+            "installingFromCommunityStore",
             "installingApp",
             "openingAppWindow",
             "updatingRuntime",
@@ -150,6 +150,9 @@
             "certificationError",
             "unavailable"
           ]
+        },
+        "googleServicesProvider": {
+          "enum": ["none", "microG", "licensedGMS"]
         },
         "currentOperation": {
           "$ref": "#/$defs/operation"

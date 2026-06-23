@@ -21,6 +21,7 @@ public final class FakeBackend: GreenhouseBackend {
     private var vmState: VMLifecycleState = .stopped
     private var androidState: AndroidReadinessState = .unavailable
     private var installedPackageCount = 0
+    private var installedAppCatalog: [AndroidApp] = []
     private var activeAppIDs: Set<AndroidAppID> = []
     private var generation = 0
 
@@ -116,6 +117,7 @@ public final class FakeBackend: GreenhouseBackend {
             patch: StatePatch(
                 androidReadiness: .ready,
                 googleServices: .signInRequired,
+                googleServicesProvider: .microG,
                 currentOperation: .idle
             )
         )
@@ -147,8 +149,13 @@ public final class FakeBackend: GreenhouseBackend {
         )
     }
 
-    public func installPackage(named displayName: String) async -> AndroidApp? {
+    public func installedApps() async -> [AndroidApp] {
+        installedAppCatalog
+    }
+
+    public func installPackage(at url: URL) async -> AndroidApp? {
         let operationGeneration = generation
+        let displayName = url.lastPathComponent
 
         guard androidState == .ready || androidState == .degraded else {
             emitIssue(.androidBootTimeout)
@@ -195,10 +202,11 @@ public final class FakeBackend: GreenhouseBackend {
             attributes: ["packageName": app.packageName],
             patch: StatePatch(currentOperation: .idle)
         )
+        installedAppCatalog.append(app)
         return app
     }
 
-    public func openGooglePlay() async -> AndroidApp? {
+    public func openGoogleServices() async -> AndroidApp? {
         let operationGeneration = generation
 
         guard androidState == .ready || androidState == .degraded else {
@@ -208,7 +216,7 @@ public final class FakeBackend: GreenhouseBackend {
 
         emit(
             name: "google.sign-in.started",
-            message: "Starting the simulated Google sign-in flow",
+            message: "Starting the simulated microG account flow",
             patch: StatePatch(
                 googleServices: .initializing,
                 currentOperation: .signingInToGoogle
@@ -217,10 +225,23 @@ public final class FakeBackend: GreenhouseBackend {
         guard await pause(generation: operationGeneration) else { return nil }
         emit(
             name: "google.services.ready",
-            message: "Simulated Google services are ready",
+            message: "Simulated microG-compatible services are ready",
             patch: StatePatch(googleServices: .ready, currentOperation: .idle)
         )
-        return .googlePlay
+        return .microGSettings
+    }
+
+    public func openCommunityStore() async -> AndroidApp? {
+        guard androidState == .ready || androidState == .degraded else {
+            emitIssue(.androidBootTimeout)
+            return nil
+        }
+
+        emit(
+            name: "community-store.opened",
+            message: "Opening the F-Droid community app source"
+        )
+        return .fDroid
     }
 
     public func openApp(_ app: AndroidApp) async -> Bool {
@@ -355,13 +376,13 @@ public final class FakeBackend: GreenhouseBackend {
                     currentOperation: .idle
                 )
             )
-        case .googlePlayDownloadFailure:
+        case .communityStoreDownloadFailure:
             emit(
-                name: "google.play-download.started",
-                message: "Starting failed Play download simulation",
+                name: "community-store.download.started",
+                message: "Starting failed community-store download simulation",
                 patch: StatePatch(
-                    currentOperation: .installingFromPlay(
-                        OperationProgress(fractionCompleted: 0.4, detail: "Downloading from Google Play")
+                    currentOperation: .installingFromCommunityStore(
+                        OperationProgress(fractionCompleted: 0.4, detail: "Downloading from F-Droid")
                     )
                 )
             )
@@ -420,6 +441,7 @@ public final class FakeBackend: GreenhouseBackend {
         vmState = .stopped
         androidState = .unavailable
         installedPackageCount = 0
+        installedAppCatalog = []
         activeAppIDs = []
         emit(
             name: "backend.reset",
@@ -429,6 +451,7 @@ public final class FakeBackend: GreenhouseBackend {
                 vmLifecycle: .stopped,
                 androidReadiness: .unavailable,
                 googleServices: .notIncluded,
+                googleServicesProvider: GoogleServicesProvider.none,
                 currentOperation: .idle
             )
         )

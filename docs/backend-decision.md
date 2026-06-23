@@ -1,25 +1,34 @@
-# Backend Selection Gate
+# Backend Selection Decision
 
-Virtualization.framework is evaluated first. QEMU with HVF is the fallback
-experiment, not a parallel product commitment.
+Decision date: June 23, 2026.
 
-A candidate is rejected if it only boots Android. It must prove the consumer
-product.
+Phase 2 decision: **no production backend selected**. That no-go remains valid
+for the two candidates tested in Phase 2. See
+[`adr/0002-platform-feasibility-no-go.md`](adr/0002-platform-feasibility-no-go.md).
 
-| Gate | Required evidence |
-| --- | --- |
-| ARM64 Linux and target Android boot | Reproducible scripts, serial logs, readiness events |
-| Lifecycle | 100 clean start/stop cycles plus sleep/wake and forced-stop recovery |
-| Networking/control | Private authenticated host/guest channel and working guest network |
-| Per-app windows | Two simultaneous tasks, independent surfaces, focus, resize, orientation |
-| Input | Keyboard, IME, pointer, relative pointer, trackpad, and controller routing |
-| Audio | Stable output, measured latency, no long-run underruns |
-| Graphics | Accelerated GLES and Vulkan evidence, representative games, frame pacing |
-| Compatibility | CDD gap analysis and viable CTS/CTS-V execution |
-| Google | Plausible, authorized GMS/Play route confirmed by Google |
-| Security | Minimal entitlements, no public bridge, runtime isolation |
-| Distribution | Signed/notarized clean-machine launch and acceptable licenses |
-| Operations | Structured events, diagnostics, crash recovery, update/rollback path |
+Phase 3 decision: adopt the open-source Android Emulator engine with an ARM64
+Goldfish/Ranchu guest, HVF, and gfxstream/MoltenVK. See
+[`adr/0004-ranchu-emulator-engine.md`](adr/0004-ranchu-emulator-engine.md).
 
-The decision ADR must include measurements, known gaps, licensing, an explicit
-Google impact, and why the losing candidate cannot close the gap economically.
+| Gate | Virtualization.framework | QEMU/HVF |
+| --- | --- | --- |
+| ARM64 Linux boot | Passed | Passed |
+| Serial/lifecycle | Native APIs passed | Serial and QMP passed |
+| Storage/network | Passed | Passed |
+| Private guest transport | Virtio socket present | Not integrated |
+| Keyboard/pointer | Passed | Passed |
+| Audio device | Passed | Passed with host-input warning |
+| Display | One working 2D scanout | Two working 2D scanouts |
+| Per-app Mac windows | Failed | Not proven |
+| Accelerated GLES/Vulkan | Failed | Failed |
+| Controller/relative pointer | Failed | Not implemented |
+| Android/CTS | Plan defined; Android not booted | Same |
+| Google authorization | Blocked | Blocked |
+| Developer ID/notarization | Blocked | Not pursued |
+| Licensing | Apple system framework | QEMU GPL-2.0-only plus dependencies |
+
+Virtualization.framework and generic QEMU remain rejected as Android display
+backends. The Android Emulator engine is QEMU-derived but is treated as a
+separate product backend because it supplies the Ranchu guest contract,
+gfxstream renderer, emulator pipes, codecs, and macOS host integrations needed
+by Android.

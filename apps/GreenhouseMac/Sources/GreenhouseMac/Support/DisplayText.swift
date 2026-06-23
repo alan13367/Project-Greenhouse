@@ -39,6 +39,16 @@ extension AndroidReadinessState {
     }
 }
 
+extension GoogleServicesProvider {
+    var title: String {
+        switch self {
+        case .none: "Not prepared"
+        case .microG: "microG"
+        case .licensedGMS: "Licensed GMS"
+        }
+    }
+}
+
 extension AppWindowState {
     var title: String {
         switch self {
@@ -60,7 +70,7 @@ extension CurrentOperation {
         case .preparingRuntime: "Preparing Android"
         case .startingAndroid: "Starting Android"
         case .signingInToGoogle: "Signing in to Google"
-        case .installingFromPlay: "Installing from Google Play"
+        case .installingFromCommunityStore: "Installing from F-Droid"
         case .installingApp: "Installing package"
         case .openingAppWindow: "Opening app window"
         case .updatingRuntime: "Updating Android"
@@ -72,7 +82,7 @@ extension CurrentOperation {
     var progress: OperationProgress? {
         switch self {
         case let .preparingRuntime(progress),
-             let .installingFromPlay(progress),
+             let .installingFromCommunityStore(progress),
              let .installingApp(progress),
              let .updatingRuntime(progress),
              let .repairingRuntime(progress):

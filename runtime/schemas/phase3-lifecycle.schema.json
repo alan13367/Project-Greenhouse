@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://greenhouse.dev/schemas/phase3-lifecycle.schema.json",
+  "title": "Greenhouse Phase 3 Lifecycle Soak",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "cyclesRequested",
+    "cyclesPassed",
+    "persistencePassed",
+    "meanBootMilliseconds",
+    "maximumBootMilliseconds"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "cyclesRequested": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "cyclesPassed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "persistencePassed": {
+      "type": "boolean"
+    },
+    "meanBootMilliseconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "maximumBootMilliseconds": {
+      "type": "number",
+      "minimum": 0
+    }
+  }
+}

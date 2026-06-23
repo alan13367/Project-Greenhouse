@@ -13,7 +13,7 @@ public enum IssueCode: String, Codable, CaseIterable, Sendable {
     case androidBootTimeout = "android.boot-timeout"
     case apkInstallationFailed = "package.installation-failed"
     case googleSignInFailed = "google.sign-in-failed"
-    case googlePlayDownloadFailed = "google.play-download-failed"
+    case communityStoreDownloadFailed = "community-store.download-failed"
     case appWindowCreationFailed = "window.creation-failed"
     case graphicsAccelerationUnavailable = "graphics.acceleration-unavailable"
     case controllerDisconnected = "controller.disconnected"
@@ -96,11 +96,11 @@ public extension GreenhouseIssue {
                 detail: "The simulated Google account flow returned an error.",
                 recoverySuggestion: "Try signing in again and verify network access."
             )
-        case .googlePlayDownloadFailure:
+        case .communityStoreDownloadFailure:
             return GreenhouseIssue(
-                code: .googlePlayDownloadFailed,
-                summary: "Google Play download failed",
-                detail: "The simulated Play download stopped before installation.",
+                code: .communityStoreDownloadFailed,
+                summary: "F-Droid download failed",
+                detail: "The simulated community-store download stopped before installation.",
                 recoverySuggestion: "Retry the download."
             )
         case .appWindowCreationFailure:

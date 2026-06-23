@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "runtime": {
+    "id": "greenhouse-community-ranchu-lineage-23.2",
+    "displayName": "Greenhouse Community Runtime",
+    "architecture": "arm64",
+    "virtualHardware": "goldfish-ranchu",
+    "engine": "android-emulator",
+    "graphics": "gfxstream-moltenvk"
+  },
+  "android": {
+    "distribution": "LineageOS",
+    "release": "23.2",
+    "platform": "Android 16 QPR2",
+    "manifestRepository": "https://github.com/LineageOS/android.git",
+    "manifestBranch": "lineage-23.2",
+    "manifestRevision": "02b3ba6a1790153e4d07dfae4b0226a4ef5ac97c",
+    "productBase": "lineage_sdk_phone_arm64",
+    "product": "greenhouse_sdk_phone_arm64",
+    "userdataPolicy": "separate-persistent-image"
+  },
+  "integration": {
+    "repository": "https://github.com/lineageos4microg/android_vendor_partner_gms.git",
+    "revision": "bd95ffe12653c1e8e695c841efa847af06d32a15",
+    "path": "vendor/partner_gms",
+    "signatureSpoofingPolicy": "restricted-system-only",
+    "fdroidRepositoryFingerprintSha256": "9BD06727E62796C0130EB6DAB39B73157451582CBD138E86C468ACC395D14165",
+    "officialGooglePlayIncluded": false
+  },
+  "packages": [
+    {
+      "module": "GmsCore",
+      "applicationId": "com.google.android.gms",
+      "version": "0.3.15.250932",
+      "versionCode": 250932030,
+      "url": "https://github.com/microg/GmsCore/releases/download/v0.3.15.250932/com.google.android.gms-250932030.apk",
+      "sha256": "52597e77fd25fdd347574d0457ed1936a4b9561cf4c8d34e7ac8dd8191dfd4b9",
+      "destination": "GmsCore/GmsCore.apk",
+      "license": "Apache-2.0"
+    },
+    {
+      "module": "FakeStore",
+      "applicationId": "com.android.vending",
+      "version": "0.3.15.250932",
+      "versionCode": 84022630,
+      "url": "https://github.com/microg/GmsCore/releases/download/v0.3.15.250932/com.android.vending-84022630.apk",
+      "sha256": "a973e0235a2829773a4faf36d235d5f703d1c04a2adff674ebaa535a2e78f937",
+      "destination": "FakeStore/FakeStore.apk",
+      "license": "Apache-2.0"
+    },
+    {
+      "module": "GsfProxy",
+      "applicationId": "com.google.android.gsf",
+      "version": "0.1.0",
+      "versionCode": 8,
+      "url": "https://github.com/microg/GsfProxy/releases/download/v0.1.0/GsfProxy.apk",
+      "sha256": "86891b174301f06a1c84187b545a0a2a57044c6b768f3e84e865908743349692",
+      "destination": "GsfProxy/GsfProxy.apk",
+      "license": "Apache-2.0"
+    },
+    {
+      "module": "FDroid",
+      "applicationId": "org.fdroid.fdroid",
+      "version": "1.23.2",
+      "versionCode": 1023052,
+      "url": "https://f-droid.org/repo/org.fdroid.fdroid_1023052.apk",
+      "sha256": "985f5181d48bb6bafd54083a048b391271e0ab28385881cc41294fb01a222762",
+      "destination": "FDroid/FDroid.apk",
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "module": "FDroidPrivilegedExtension",
+      "applicationId": "org.fdroid.fdroid.privileged",
+      "version": "0.2.13",
+      "versionCode": 2130,
+      "url": "https://f-droid.org/repo/org.fdroid.fdroid.privileged_2130.apk",
+      "sha256": "1008525a17b4f6a93ac690f9c50dcb675b6bebf53d2879dbc98ba65a1cb2e28d",
+      "destination": "FDroidPrivilegedExtension/FDroidPrivilegedExtension.apk",
+      "license": "Apache-2.0"
+    }
+  ]
+}

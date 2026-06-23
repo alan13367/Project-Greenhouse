@@ -20,32 +20,22 @@ struct RuntimeStatusView: View {
 
             Spacer()
 
-            action
+            RuntimeActionView(
+                runtimeInstallation: model.snapshot.runtimeInstallation,
+                vmLifecycle: model.snapshot.vmLifecycle,
+                startAndroid: {
+                    Task { await model.startAndroid() }
+                },
+                stopAndroid: {
+                    Task { await model.stopAndroid() }
+                },
+                prepareRuntime: {
+                    Task { await model.prepareRuntime() }
+                }
+            )
         }
         .padding()
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
-    }
-
-    @ViewBuilder
-    private var action: some View {
-        switch (model.snapshot.runtimeInstallation, model.snapshot.vmLifecycle) {
-        case (.ready, .stopped), (.ready, .crashed):
-            Button("Start Android") {
-                Task { await model.startAndroid() }
-            }
-            .buttonStyle(.borderedProminent)
-        case (.ready, .running):
-            Button("Stop") {
-                Task { await model.stopAndroid() }
-            }
-        case (.downloading, _), (.verifying, _), (.installing, _), (.repairing, _), (.updating, _):
-            EmptyView()
-        default:
-            Button("Prepare Android") {
-                Task { await model.prepareRuntime() }
-            }
-            .buttonStyle(.borderedProminent)
-        }
     }
 
     private var statusTitle: String {
@@ -67,7 +57,7 @@ struct RuntimeStatusView: View {
     private var statusDetail: String {
         switch model.snapshot.androidReadiness {
         case .ready:
-            "Install a package, open Google Play, or launch an app."
+            "Install from F-Droid or a package, or configure optional Google compatibility."
         case .degraded:
             "Apps may open, but graphics or another service needs attention."
         case .booting, .connecting:
@@ -94,6 +84,35 @@ struct RuntimeStatusView: View {
         case .degraded: .orange
         case .booting, .connecting: .blue
         case .unavailable: .accentColor
+        }
+    }
+}
+
+private struct RuntimeActionView: View {
+    let runtimeInstallation: RuntimeInstallationState
+    let vmLifecycle: VMLifecycleState
+    let startAndroid: () -> Void
+    let stopAndroid: () -> Void
+    let prepareRuntime: () -> Void
+
+    var body: some View {
+        VStack {
+            switch (runtimeInstallation, vmLifecycle) {
+            case (.ready, .stopped), (.ready, .crashed):
+                Button("Start Android", action: startAndroid)
+                    .buttonStyle(.borderedProminent)
+            case (.ready, .running):
+                Button("Stop", action: stopAndroid)
+            case (.downloading, _),
+                 (.verifying, _),
+                 (.installing, _),
+                 (.repairing, _),
+                 (.updating, _):
+                EmptyView()
+            default:
+                Button("Prepare Android", action: prepareRuntime)
+                    .buttonStyle(.borderedProminent)
+            }
         }
     }
 }

@@ -80,6 +80,7 @@ private extension StatePatch {
             vmLifecycle: vmLifecycle,
             androidReadiness: androidReadiness,
             googleServices: googleServices,
+            googleServicesProvider: googleServicesProvider,
             currentOperation: currentOperation?.redacted(homeDirectory: homeDirectory),
             appWindow: appWindow.map {
                 AppWindowPatch(
@@ -104,8 +105,8 @@ private extension CurrentOperation {
             .startingAndroid
         case .signingInToGoogle:
             .signingInToGoogle
-        case let .installingFromPlay(progress):
-            .installingFromPlay(progress.redacted(homeDirectory: homeDirectory))
+        case let .installingFromCommunityStore(progress):
+            .installingFromCommunityStore(progress.redacted(homeDirectory: homeDirectory))
         case let .installingApp(progress):
             .installingApp(progress.redacted(homeDirectory: homeDirectory))
         case .openingAppWindow:

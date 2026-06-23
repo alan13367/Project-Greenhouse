@@ -25,7 +25,7 @@ final class DevelopmentEventTests: XCTestCase {
             from: Data(event.ndjson.utf8)
         )
         XCTAssertEqual(decoded, event)
-        XCTAssertEqual(decoded.schemaVersion, 1)
+        XCTAssertEqual(decoded.schemaVersion, 2)
     }
 
     func testRedactionCoversSensitiveKeysEmailsAndHomePaths() {

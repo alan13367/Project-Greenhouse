@@ -15,7 +15,10 @@ struct LibraryRootView: View {
         } detail: {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    header
+                    LibraryHeader(
+                        model: model,
+                        appWindowCoordinator: appWindowCoordinator
+                    )
                     RuntimeStatusView(model: model)
 
                     if let issue = model.latestIssue {
@@ -24,8 +27,11 @@ struct LibraryRootView: View {
                         }
                     }
 
-                    operationProgress
-                    libraryContent
+                    OperationProgressCard(operation: model.snapshot.currentOperation)
+                    LibraryContent(
+                        model: model,
+                        appWindowCoordinator: appWindowCoordinator
+                    )
                 }
                 .padding(24)
                 .frame(maxWidth: 900, alignment: .leading)
@@ -45,6 +51,13 @@ struct LibraryRootView: View {
                     } label: {
                         Label("Diagnostics", systemImage: "waveform.path.ecg")
                     }
+
+                    Button {
+                        Task { await model.refreshInstalledApps() }
+                    } label: {
+                        Label("Refresh Apps", systemImage: "arrow.clockwise")
+                    }
+                    .disabled(model.snapshot.androidReadiness != .ready)
                 }
             }
         }
@@ -55,86 +68,181 @@ struct LibraryRootView: View {
         ) { result in
             guard case let .success(urls) = result, let url = urls.first else { return }
             Task {
-                await model.installPackage(named: url.lastPathComponent)
+                await model.installPackage(at: url)
             }
         }
     }
 
-    private var header: some View {
-        HStack(alignment: .firstTextBaseline) {
+    private static let packageTypes: [UTType] = [
+        UTType(filenameExtension: "apk") ?? .data,
+        UTType(filenameExtension: "apks") ?? .archive,
+        UTType(filenameExtension: "xapk") ?? .archive
+    ]
+}
+
+private struct LibraryHeader: View {
+    let model: GreenhouseAppModel
+    let appWindowCoordinator: AppWindowCoordinator
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 20) {
             VStack(alignment: .leading, spacing: 5) {
                 Text("Your Android apps, without the Android setup")
                     .font(.title2.weight(.semibold))
-                Text("This foundation build uses a deterministic fake backend. No virtual machine or Google software is included.")
+                Text("The Community Runtime uses microG-compatible services and F-Droid. Official Google Play is not included.")
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
 
-            Button {
-                Task {
-                    if appWindowCoordinator.focusWindow(for: AndroidApp.googlePlay.id) {
-                        return
-                    }
-                    guard let app = await model.openGooglePlay() else { return }
-                    guard await model.openApp(app) else { return }
-                    appWindowCoordinator.presentWindow(for: app.id) {
-                        openWindow(value: app.id)
-                    }
-                }
-            } label: {
-                Label("Google Play", systemImage: "bag.fill")
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(model.snapshot.androidReadiness != .ready)
+            CommunityRuntimeActions(
+                model: model,
+                appWindowCoordinator: appWindowCoordinator
+            )
         }
     }
+}
 
-    @ViewBuilder
-    private var operationProgress: some View {
-        if let progress = model.snapshot.currentOperation.progress {
-            VStack(alignment: .leading, spacing: 8) {
+private struct CommunityRuntimeActions: View {
+    let model: GreenhouseAppModel
+    let appWindowCoordinator: AppWindowCoordinator
+
+    var body: some View {
+        ViewThatFits {
+            HStack {
+                GoogleServicesButton(
+                    model: model,
+                    appWindowCoordinator: appWindowCoordinator
+                )
+                CommunityStoreButton(
+                    model: model,
+                    appWindowCoordinator: appWindowCoordinator
+                )
+            }
+            VStack(alignment: .trailing) {
+                GoogleServicesButton(
+                    model: model,
+                    appWindowCoordinator: appWindowCoordinator
+                )
+                CommunityStoreButton(
+                    model: model,
+                    appWindowCoordinator: appWindowCoordinator
+                )
+            }
+        }
+    }
+}
+
+private struct GoogleServicesButton: View {
+    let model: GreenhouseAppModel
+    let appWindowCoordinator: AppWindowCoordinator
+
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Button {
+            Task {
+                if appWindowCoordinator.focusWindow(for: AndroidApp.microGSettings.id) {
+                    return
+                }
+                guard let app = await model.openGoogleServices() else { return }
+                guard await model.openApp(app) else { return }
+                appWindowCoordinator.presentWindow(for: app.id) {
+                    openWindow(value: app.id)
+                }
+            }
+        } label: {
+            Label("microG Setup", systemImage: "person.crop.circle.badge.checkmark")
+        }
+        .disabled(model.snapshot.androidReadiness != .ready)
+    }
+}
+
+private struct CommunityStoreButton: View {
+    let model: GreenhouseAppModel
+    let appWindowCoordinator: AppWindowCoordinator
+
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Button {
+            Task {
+                if appWindowCoordinator.focusWindow(for: AndroidApp.fDroid.id) {
+                    return
+                }
+                guard let app = await model.openCommunityStore() else { return }
+                guard await model.openApp(app) else { return }
+                appWindowCoordinator.presentWindow(for: app.id) {
+                    openWindow(value: app.id)
+                }
+            }
+        } label: {
+            Label("F-Droid", systemImage: "shippingbox.circle.fill")
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(model.snapshot.androidReadiness != .ready)
+    }
+}
+
+private struct OperationProgressCard: View {
+    let operation: CurrentOperation
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let progress = operation.progress {
                 HStack {
-                    Text(model.snapshot.currentOperation.title)
+                    Text(operation.title)
                         .font(.headline)
                     Spacer()
-                    Text(progress.fractionCompleted, format: .percent.precision(.fractionLength(0)))
-                        .foregroundStyle(.secondary)
+                    Text(
+                        progress.fractionCompleted,
+                        format: .percent.precision(.fractionLength(0))
+                    )
+                    .foregroundStyle(.secondary)
                 }
                 ProgressView(value: progress.fractionCompleted)
                 Text(progress.detail)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            } else if operation != .idle {
+                HStack(spacing: 10) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text(operation.title)
+                }
             }
-            .padding()
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-        } else if model.snapshot.currentOperation != .idle {
-            HStack(spacing: 10) {
-                ProgressView()
-                    .controlSize(.small)
-                Text(model.snapshot.currentOperation.title)
+        }
+        .padding(operation == .idle ? 0 : 16)
+        .background {
+            if operation != .idle {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.regularMaterial)
             }
-            .padding()
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         }
     }
+}
 
-    @ViewBuilder
-    private var libraryContent: some View {
-        if model.apps.isEmpty {
-            ContentUnavailableView {
-                Label("No Android apps yet", systemImage: "square.grid.2x2")
-            } description: {
-                Text("Prepare Android, then install a package or add the two built-in demo apps.")
-            } actions: {
-                Button("Add Two Demo Apps") {
-                    model.addDemoApps()
+private struct LibraryContent: View {
+    let model: GreenhouseAppModel
+    let appWindowCoordinator: AppWindowCoordinator
+
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if model.apps.isEmpty {
+                ContentUnavailableView {
+                    Label("No Android apps yet", systemImage: "square.grid.2x2")
+                } description: {
+                    Text("Prepare Android, then open F-Droid, install a package, or add the built-in demo apps.")
+                } actions: {
+                    Button("Add Two Demo Apps") {
+                        model.addDemoApps()
+                    }
+                    .disabled(model.snapshot.androidReadiness != .ready)
                 }
-                .disabled(model.snapshot.androidReadiness != .ready)
-            }
-            .frame(maxWidth: .infinity, minHeight: 260)
-        } else {
-            VStack(alignment: .leading, spacing: 12) {
+                .frame(maxWidth: .infinity, minHeight: 260)
+            } else {
                 Text("Installed Apps")
                     .font(.headline)
 
@@ -159,12 +267,6 @@ struct LibraryRootView: View {
             }
         }
     }
-
-    private static let packageTypes: [UTType] = [
-        UTType(filenameExtension: "apk") ?? .data,
-        UTType(filenameExtension: "apks") ?? .archive,
-        UTType(filenameExtension: "xapk") ?? .archive
-    ]
 }
 
 private struct LibrarySidebar: View {
@@ -198,6 +300,11 @@ private struct LibrarySidebar: View {
                     title: "Android",
                     value: model.snapshot.androidReadiness.title,
                     symbol: "apps.iphone"
+                )
+                SidebarStatusRow(
+                    title: "Google compatibility",
+                    value: model.snapshot.googleServicesProvider.title,
+                    symbol: "person.crop.circle.badge.checkmark"
                 )
             }
         }

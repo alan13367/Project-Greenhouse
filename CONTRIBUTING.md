@@ -13,8 +13,8 @@ and implementation changes that preserve the product contract.
 ## Development
 
 ```bash
-./scripts/dev-bootstrap.sh
-./scripts/build-and-test.sh
+./script/test.sh
+./script/build_and_run.sh --verify
 ```
 
 Pull requests should be small enough to review, explain user-visible behavior,

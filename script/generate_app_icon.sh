@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Regenerate the macOS icon resources from the editable source artwork.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

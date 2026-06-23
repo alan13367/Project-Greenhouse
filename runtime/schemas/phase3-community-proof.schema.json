@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://greenhouse.dev/schemas/phase3-community-proof.schema.json",
+  "title": "Greenhouse Phase 3 Community Runtime Proof",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "engine",
+    "virtualHardware",
+    "graphicsTransport",
+    "renderer",
+    "vulkanLevel",
+    "vulkanDevice",
+    "appWindowAgentResponsive",
+    "requiredPackagesPresent",
+    "privateADBPort",
+    "streams",
+    "persistenceVerified",
+    "restartRenderer",
+    "restartVulkanDevice"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "engine": {
+      "const": "Android Emulator"
+    },
+    "virtualHardware": {
+      "const": "goldfish-ranchu"
+    },
+    "graphicsTransport": {
+      "const": "gfxstream-moltenvk"
+    },
+    "renderer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "vulkanLevel": {
+      "type": "string",
+      "minLength": 1
+    },
+    "vulkanDevice": {
+      "type": "string",
+      "minLength": 1
+    },
+    "appWindowAgentResponsive": {
+      "const": true
+    },
+    "requiredPackagesPresent": {
+      "const": true
+    },
+    "privateADBPort": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 65535
+    },
+    "streams": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/stream"
+      }
+    },
+    "persistenceVerified": {
+      "const": true
+    },
+    "restartRenderer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "restartVulkanDevice": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "nullableMetric": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "stream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packageName",
+        "displayID",
+        "framesDecoded",
+        "framesPerSecond",
+        "frameJitterMilliseconds",
+        "decodeLatencyP95Milliseconds",
+        "controlRoundTripMilliseconds"
+      ],
+      "properties": {
+        "packageName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "displayID": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "framesDecoded": {
+          "type": "integer",
+          "minimum": 30
+        },
+        "framesPerSecond": {
+          "type": "number",
+          "minimum": 0
+        },
+        "frameJitterMilliseconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "decodeLatencyP95Milliseconds": {
+          "$ref": "#/$defs/nullableMetric"
+        },
+        "controlRoundTripMilliseconds": {
+          "$ref": "#/$defs/nullableMetric"
+        }
+      }
+    }
+  }
+}

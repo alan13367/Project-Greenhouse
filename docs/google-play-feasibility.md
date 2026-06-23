@@ -2,9 +2,19 @@
 
 Assessment date: June 23, 2026.
 
-Status: **unresolved release blocker**. There is a public route to begin the
-conversation, but no authorization or certification outcome exists for
-Greenhouse yet.
+Status: **future licensed distribution track**. There is a public route to
+begin the conversation, but no authorization or certification outcome exists
+for Greenhouse. Official Google Play is not part of the v1 Community Runtime.
+
+Phase 2 outcome: the technical backend gate also failed, so no licensed Google test
+runtime was requested or assembled. The public partner form requires company
+and commercial details that cannot be truthfully submitted by an automated
+repository task. A project owner must submit it and retain Google's written
+response.
+
+ADR 0003 deliberately unblocks Phase 3 guest work with LineageOS, microG, and
+F-Droid. microG is an open-source compatibility implementation, not GMS, Google
+Play, or Google certification.
 
 ## Facts established from first-party documentation
 
@@ -24,8 +34,12 @@ Greenhouse yet.
   environments. App developers may reject Greenhouse regardless of general app
   compatibility:
   <https://developer.android.com/google/play/integrity/overview>.
+- Android 17 is the current AOSP release branch and now has a published CDD.
+  The next guest spike should pin an exact Android 17 manifest revision:
+  <https://source.android.com/docs/setup/start/requirements> and
+  <https://source.android.com/docs/compatibility/17/android-17-cdd>.
 
-## Required path
+## Required path for a future official Google Play edition
 
 1. Form a legal entity and provide the product, volume, countries, distribution
    channels, Android version, and “Other” form-factor details requested by the
@@ -49,7 +63,7 @@ Greenhouse yet.
 
 | Area | Greenhouse obligation | Current state |
 | --- | --- | --- |
-| CDD | Meet the exact CDD for the selected Android version and declared form factor/features | Version and form factor not yet selected |
+| CDD | Meet the exact CDD for the selected Android version and declared form factor/features | Android 17 is the candidate; form factor requires Google confirmation |
 | CTS | Pass the matching ARM suite; track retries and stable failures | Harness not integrated |
 | CTS Verifier | Complete applicable manual/semi-automated tests, including display, audio, input, and connectivity | Test plan not yet mapped |
 | GMS | Obtain license and private partner requirements; respect geography and required app set | Contact path identified; no agreement |
@@ -65,5 +79,5 @@ Greenhouse yet.
   certified device.
 - Do not claim Google Play support until written authorization and candidate
   certification evidence exist.
-- If Google declares the form factor ineligible, open a product-contract ADR.
-  Do not silently replace the release requirement with an unofficial bundle.
+- If Google declares the form factor ineligible, keep the Community Runtime
+  contract. Do not silently replace licensed GMS with an unofficial bundle.

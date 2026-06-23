@@ -21,7 +21,7 @@ public struct DevelopmentEvent: Codable, Equatable, Sendable, Identifiable {
     public let issue: GreenhouseIssue?
 
     public init(
-        schemaVersion: Int = 1,
+        schemaVersion: Int = 2,
         id: UUID = UUID(),
         sequence: Int,
         timestamp: Date = Date(),
@@ -51,7 +51,7 @@ public struct DevelopmentEvent: Codable, Equatable, Sendable, Identifiable {
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         guard let data = try? encoder.encode(self) else {
-            return #"{"schemaVersion":1,"level":"error","name":"event.encoding-failed"}"#
+            return #"{"schemaVersion":2,"level":"error","name":"event.encoding-failed"}"#
         }
         return String(decoding: data, as: UTF8.self)
     }

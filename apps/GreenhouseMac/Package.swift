@@ -9,22 +9,42 @@ let package = Package(
     ],
     products: [
         .library(name: "GreenhouseCore", targets: ["GreenhouseCore"]),
-        .executable(name: "GreenhouseMac", targets: ["GreenhouseMac"])
+        .library(name: "GreenhouseRuntime", targets: ["GreenhouseRuntime"]),
+        .executable(name: "GreenhouseMac", targets: ["GreenhouseMac"]),
+        .executable(
+            name: "GreenhouseRuntimeProbe",
+            targets: ["GreenhouseRuntimeProbe"]
+        )
     ],
     targets: [
         .target(
             name: "GreenhouseCore",
             path: "Sources/GreenhouseCore"
         ),
+        .target(
+            name: "GreenhouseRuntime",
+            dependencies: ["GreenhouseCore"],
+            path: "Sources/GreenhouseRuntime"
+        ),
         .executableTarget(
             name: "GreenhouseMac",
-            dependencies: ["GreenhouseCore"],
+            dependencies: ["GreenhouseCore", "GreenhouseRuntime"],
             path: "Sources/GreenhouseMac"
+        ),
+        .executableTarget(
+            name: "GreenhouseRuntimeProbe",
+            dependencies: ["GreenhouseCore", "GreenhouseRuntime"],
+            path: "Sources/GreenhouseRuntimeProbe"
         ),
         .testTarget(
             name: "GreenhouseCoreTests",
             dependencies: ["GreenhouseCore"],
             path: "Tests/GreenhouseCoreTests"
+        ),
+        .testTarget(
+            name: "GreenhouseRuntimeTests",
+            dependencies: ["GreenhouseRuntime"],
+            path: "Tests/GreenhouseRuntimeTests"
         )
     ],
     swiftLanguageModes: [.v5]

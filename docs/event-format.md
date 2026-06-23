@@ -5,7 +5,7 @@ schema is `runtime/schemas/development-event.schema.json`.
 
 Required envelope fields:
 
-- `schemaVersion`, currently `1`.
+- `schemaVersion`, currently `2`.
 - UUID `id` and backend-local monotonic `sequence`.
 - ISO-8601 `timestamp`.
 - Stable `source`, `level`, machine-readable `name`, and human `message`.
@@ -23,3 +23,6 @@ home-directory prefix becomes `~`.
 Schema changes that remove or reinterpret a field require a new
 `schemaVersion`. Additive optional fields may remain within a version when old
 consumers safely ignore them.
+
+Version 2 adds the explicit Google-service provider field and replaces the
+Google Play installation operation with the Community Runtime store operation.

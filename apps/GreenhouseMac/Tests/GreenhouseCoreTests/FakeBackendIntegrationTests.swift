@@ -67,6 +67,30 @@ final class FakeBackendIntegrationTests: XCTestCase {
         XCTAssertEqual(model.snapshot.currentOperation, .idle)
     }
 
+    func testCommunityRuntimeExposesMicroGAndFDroidWithoutClaimingGooglePlay() async {
+        let model = GreenhouseAppModel(
+            backend: FakeBackend(configuration: .tests)
+        )
+
+        await prepareAndStartAndroid(model)
+        let services = await model.openGoogleServices()
+        let store = await model.openCommunityStore()
+
+        await waitUntil {
+            model.snapshot.googleServicesProvider == .microG &&
+            model.snapshot.googleServices == .ready &&
+            model.apps.count == 2
+        }
+
+        XCTAssertEqual(services, .microGSettings)
+        XCTAssertEqual(store, .fDroid)
+        XCTAssertEqual(Set(model.apps.map(\.packageName)), [
+            "com.google.android.gms",
+            "org.fdroid.fdroid"
+        ])
+        XCTAssertFalse(model.apps.contains { $0.name == "Google Play" })
+    }
+
     func testStoppingAndroidClosesVisibleAppWindows() async {
         let model = GreenhouseAppModel(
             backend: FakeBackend(configuration: .tests)

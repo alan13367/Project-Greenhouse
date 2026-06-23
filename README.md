@@ -8,12 +8,13 @@ Project Greenhouse is building the easiest way to run Android apps on an Apple
 Silicon Mac. The product runs one managed Android environment in the background
 and presents each Android app in its own Mac window.
 
-> Current status: Phase 0 and Phase 1 foundation. The repository contains a
-> native SwiftUI shell and deterministic fake backend. It does **not** yet
-> contain an Android runtime, virtualization backend, Google Play, or Google
-> proprietary software.
+> Current status: the Phase 3 host and guest implementation is in-tree. The
+> strict stock ARM64 AVD proof and a 50-cycle persistence soak passed on
+> June 23, 2026. The remaining acceptance gate is building the pinned
+> LineageOS Community Runtime on Linux and running the same two-window proof
+> through Greenhouse's native VideoToolbox/Metal path.
 
-## Foundation demo
+## Build, test, and run
 
 Requirements:
 
@@ -24,21 +25,19 @@ Requirements:
 Run:
 
 ```bash
-./scripts/dev-bootstrap.sh
+./script/test.sh
 ./script/build_and_run.sh
 ```
 
-Inside Greenhouse:
+`test.sh` builds the Swift package, runs all tests, compiles the Android guest
+agent against pinned platform stubs, validates runtime metadata, and checks the
+Ranchu/app-window source contract.
 
-1. Choose **Prepare Android**.
-2. Choose **Start Android**.
-3. Add the two demo apps.
-4. Open both apps to create independent Mac windows.
-5. Open **Advanced Diagnostics** and exercise any failure scenario.
-
-The run script builds a SwiftPM executable, stages a local
+`build_and_run.sh` is the main interactive command. It builds a SwiftPM
+executable, stages a local
 `dist/GreenhouseMac.app`, and launches it as a normal foreground Mac app. It
-also supports `--verify`, `--debug`, `--logs`, and `--telemetry`.
+uses the deterministic fake backend unless `GREENHOUSE_BACKEND=ranchu` is set,
+and supports `--verify`, `--debug`, `--logs`, and `--telemetry`.
 
 ## What Phase 1 proves
 
@@ -46,10 +45,34 @@ also supports `--verify`, `--debug`, `--logs`, and `--telemetry`.
   state models.
 - A deterministic fake backend covering the happy path and all roadmap failure
   cases.
-- A SwiftUI app library, Google Play entry point, package picker, runtime
+- A SwiftUI app library, microG and F-Droid entry points, package picker, runtime
   progress, diagnostics, and independent fake app windows.
 - Versioned NDJSON development events with unified logging and redaction.
-- Unit and integration tests plus macOS CI.
+- Unit and integration tests plus repeatable local verification.
+
+## Phase 2 decision
+
+Virtualization.framework and generic QEMU/HVF were rejected because their
+tested macOS graphics paths did not provide the accelerated, independent
+Android surfaces Greenhouse needs. The decision is preserved in
+[ADR 0002](docs/adr/0002-platform-feasibility-no-go.md) and the
+[backend decision](docs/backend-decision.md); the disposable probe code is not
+part of the product repository.
+
+## What Phase 3 implements
+
+- ARM64 Goldfish/Ranchu instead of Cuttlefish.
+- Android Emulator engine launch with HVF and `-gpu host`
+  gfxstream/MoltenVK acceleration.
+- One trusted Android virtual display and MediaCodec stream per app.
+- VideoToolbox decoding into native Metal-backed Mac windows.
+- Display-scoped resize, focus, pointer, keyboard/IME text, audio, and
+  controller routing.
+- Isolated localhost ADB and persistent managed AVD userdata.
+- A reproducible two-app stock-AVD proof, JSON measurement report, and
+  50-cycle lifecycle/persistence soak.
+
+See [the Phase 3 Ranchu design and execution gate](docs/phase-3-ranchu.md).
 
 ## Product boundaries
 
@@ -58,13 +81,12 @@ Android apps. x86 Android apps, Intel Macs, every Android hardware feature, and
 universal compatibility with DRM, anti-cheat, or Play Integrity enforcement are
 not promised.
 
-Google Play is a release requirement and an unresolved release blocker. GMS is
-not part of AOSP and will only be distributed after an explicit license and
-certification path with Google. No proprietary Google binaries belong in this
-repository.
+The v1 Community Runtime uses microG-compatible services, F-Droid, and local
+packages. It does not include official Google Play or proprietary GMS. Licensed
+Google Play support remains a possible future distribution track.
 
 Read the [product contract](docs/product-contract.md) and
-and [Google Play feasibility assessment](docs/google-play-feasibility.md) before
+[Community Runtime design](docs/community-runtime.md) before
 making compatibility or distribution claims.
 
 ## Contributing

@@ -20,12 +20,14 @@ GreenhouseBackend protocol
 FakeBackend (Phase 1)
 ```
 
-The backend protocol owns preparation, lifecycle, package installation, Google
-Play entry, app open/close, simulation, and an asynchronous event stream. It
+The backend protocol owns preparation, lifecycle, package installation,
+Google-compatibility setup, community-store entry, app open/close, simulation,
+and an asynchronous event stream. It
 does not expose QEMU arguments, VZ objects, ADB commands, or raw process errors.
 
 State is split into runtime installation, VM lifecycle, Android readiness,
-Google services, current operation, and per-app window state. A single event may
+Google-service provider and readiness, current operation, and per-app window
+state. A single event may
 patch several related machines, but no combined mega-enum hides valid
 combinations.
 
@@ -38,6 +40,16 @@ Android unavailable → booting → connecting → ready
 app closed → creating display → launching task → visible
 ```
 
-Future backend experiments conform to the same contract. Backend-specific
-configuration belongs under `experiments/backends/`, while accepted product
-code belongs in `Backends/`.
+Phase 2 rejected Virtualization.framework and generic QEMU/HVF because their
+tested macOS graphics paths did not provide accelerated independent Android
+surfaces. The durable decision remains in ADR 0002; the disposable probe code
+was removed.
+
+Phase 3 selects an ARM64 Goldfish/Ranchu guest running through the Android
+Emulator engine. `GreenhouseRuntime` owns HVF/host-GPU launch, isolated ADB,
+readiness, app streams, VideoToolbox, Metal, audio, and input routing.
+`GreenhouseAppWindowAgent` owns trusted virtual displays, targeted task launch,
+MediaCodec encoding, and display-scoped event injection inside Android.
+
+The fake backend remains the deterministic product specification. Set
+`GREENHOUSE_BACKEND=ranchu` to run the real backend after provisioning an AVD.

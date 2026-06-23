@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://greenhouse.dev/schemas/phase3-proof.schema.json",
+  "title": "Greenhouse Phase 3 Stock AVD Proof",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "avd",
+    "serial",
+    "engine",
+    "cpuAcceleration",
+    "graphicsMode",
+    "renderer",
+    "glesVersion",
+    "vulkanLevel",
+    "vulkanVersion",
+    "vulkanDevice",
+    "vulkanDriver",
+    "bootMilliseconds",
+    "apps",
+    "displayIds",
+    "virtualDisplayCountObserved",
+    "twoAppDisplaysObserved",
+    "tasksRoutedToDisplays",
+    "videoStartupMilliseconds",
+    "videoStartupNote",
+    "inputCommandRoundTripMilliseconds",
+    "framePacing",
+    "framePacingWorkload",
+    "frameRateMean",
+    "frameRateSampleJitter",
+    "resizeAttempted",
+    "resizeAutomationSucceeded",
+    "displayLifecycleVerified",
+    "persistenceVerified",
+    "inputLatencyMilliseconds",
+    "inputLatencyNote"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "avd": {
+      "type": "string",
+      "minLength": 1
+    },
+    "serial": {
+      "type": "string",
+      "pattern": "^emulator-[0-9]+$"
+    },
+    "engine": {
+      "const": "Android Emulator"
+    },
+    "cpuAcceleration": {
+      "const": "HVF"
+    },
+    "graphicsMode": {
+      "const": "host"
+    },
+    "renderer": {
+      "type": "string"
+    },
+    "glesVersion": {
+      "type": "string"
+    },
+    "vulkanLevel": {
+      "type": "string"
+    },
+    "vulkanVersion": {
+      "type": "string"
+    },
+    "vulkanDevice": {
+      "type": "string"
+    },
+    "vulkanDriver": {
+      "type": "string"
+    },
+    "bootMilliseconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "apps": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "string"
+      }
+    },
+    "displayIds": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "virtualDisplayCountObserved": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "twoAppDisplaysObserved": {
+      "type": "boolean"
+    },
+    "tasksRoutedToDisplays": {
+      "type": "boolean"
+    },
+    "videoStartupMilliseconds": {
+      "$ref": "#/$defs/twoAppMeasurement"
+    },
+    "videoStartupNote": {
+      "const": "Host launch to scrcpy virtual-display creation; final ffprobe frame counts verify that encoded video followed."
+    },
+    "inputCommandRoundTripMilliseconds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mean", "p95", "samples"],
+      "properties": {
+        "mean": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "p95": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "samples": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "framePacing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["appOne", "appTwo"],
+      "properties": {
+        "appOne": {
+          "$ref": "#/$defs/framePacing"
+        },
+        "appTwo": {
+          "$ref": "#/$defs/framePacing"
+        }
+      }
+    },
+    "framePacingWorkload": {
+      "const": "alternating display-targeted swipe animations"
+    },
+    "frameRateMean": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "frameRateSampleJitter": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "resizeAttempted": {
+      "type": "boolean"
+    },
+    "resizeAutomationSucceeded": {
+      "type": "boolean"
+    },
+    "displayLifecycleVerified": {
+      "type": "boolean"
+    },
+    "persistenceVerified": {
+      "type": "boolean"
+    },
+    "inputLatencyMilliseconds": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "inputLatencyNote": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "twoAppMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["appOne", "appTwo"],
+      "properties": {
+        "appOne": {
+          "type": "number",
+          "minimum": 0
+        },
+        "appTwo": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "framePacing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frames",
+        "meanFramesPerSecond",
+        "intervalJitterMilliseconds",
+        "p95IntervalMilliseconds",
+        "longFrameRatio"
+      ],
+      "properties": {
+        "frames": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "meanFramesPerSecond": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "intervalJitterMilliseconds": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "p95IntervalMilliseconds": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "longFrameRatio": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}

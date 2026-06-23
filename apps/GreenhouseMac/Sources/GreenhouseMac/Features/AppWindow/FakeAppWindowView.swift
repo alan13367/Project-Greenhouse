@@ -70,7 +70,8 @@ struct FakeAppWindowView: View {
     private var gradientColors: [Color] {
         switch app.source {
         case .demo: [.indigo, .mint]
-        case .googlePlay: [.blue, .green]
+        case .communityStore: [.blue, .mint]
+        case .systemService: [.green, .teal]
         case .localPackage: [.purple, .orange]
         }
     }

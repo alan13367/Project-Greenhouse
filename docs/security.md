@@ -32,7 +32,7 @@ are untrusted input.
 | Compromised update channel | TLS plus offline artifact signature verification and version policy |
 | Guest escape or backend vulnerability | Minimal devices/channels, sandbox review, patch SLA, backend hardening |
 | Arbitrary host file access | No shared home directory; user-selected files copied through a narrow broker |
-| Public ADB or control socket | Local/private transport, authentication, no wildcard network listener |
+| Public ADB or control socket | Dedicated loopback-only ADB server, managed home/keys, local port forwards, guest peer-UID checks, no wildcard listener |
 | Credential leakage in logs | Structured allowlisted fields, sensitive-key redaction, email/home-path masking |
 | Malicious APK | Clear provenance, package metadata, isolated guest install, no host execution |
 | Persistent data corruption | Journaling, atomic updates, graceful shutdown, backups/migration tests |
@@ -50,6 +50,8 @@ are untrusted input.
   or full user paths.
 - Never bypass Play Integrity, DRM, anti-cheat, or certification controls.
 
-Phase 1 implements structured logging redaction and keeps the fake backend free
-of external listeners and runtime artifacts. Runtime verification, sandboxing,
-entitlements, and update security are future implementation gates.
+Phase 1 implements structured logging redaction. Phase 3 isolates ADB on
+localhost, keeps its key home under managed runtime data, checks that app-window
+socket peers are Android shell/root (the ADB-forward path), and never binds the
+guest agent to a network interface. Runtime package signatures, sandboxing,
+emulator redistribution hardening, and update security remain release gates.

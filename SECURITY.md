@@ -1,7 +1,11 @@
 # Security Policy
 
-Phase 1 is a non-production fake-backend foundation. No Android runtime, Google
-software, network listener, or update service is included.
+The product app now contains a non-production Ranchu backend in addition to the
+deterministic fake backend. Phase 3 adds a hash-pinned microG/F-Droid package
+supply, an isolated localhost ADB server, and a display-stream protocol. No
+downloaded APK, built Android image, emulator binary, proprietary Google
+software, public network listener, or update service is committed to the
+repository.
 
 Please report vulnerabilities privately through GitHub’s **Report a
 vulnerability** flow when available. If private reporting is unavailable, open
