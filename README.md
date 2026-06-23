@@ -1,95 +1,161 @@
 # Project Greenhouse
 
 <p align="center">
-  <img src="apps/GreenhouseMac/Resources/AppIcon-1024.png" alt="Project Greenhouse app icon" width="192">
+  <img src="apps/GreenhouseMac/Resources/AppIcon-1024.png" alt="Project Greenhouse icon" width="160">
 </p>
 
-Project Greenhouse is building the easiest way to run Android apps on an Apple
-Silicon Mac. The product runs one managed Android environment in the background
-and presents each Android app in its own Mac window.
+<p align="center">
+  <strong>Android apps on your Mac, without living inside an emulator.</strong>
+</p>
 
-> Current status: the Phase 3 host and guest implementation is in-tree. The
-> strict stock ARM64 AVD proof and a 50-cycle persistence soak passed on
-> June 23, 2026. The remaining acceptance gate is building the pinned
-> LineageOS Community Runtime on Linux and running the same two-window proof
-> through Greenhouse's native VideoToolbox/Metal path.
+Greenhouse is an open-source macOS app for running compatible Android apps and
+games on Apple Silicon. It manages one Android system in the background, then
+presents each Android app in its own Mac window.
 
-## Build, test, and run
+The experience Greenhouse is working toward is deliberately simple:
+
+```text
+Open Greenhouse → Install an app → Open it in its own Mac window
+```
+
+No virtual-machine dashboard. No device profiles. No ADB setup. No asking
+people to choose an Android image, ABI, CPU count, or graphics backend.
+
+![The Greenhouse app library with its managed Android environment ready](assets/app-library.png)
+
+## Android apps should feel like Mac apps
+
+Greenhouse is not trying to put a prettier frame around a phone emulator. The
+shared Android system is infrastructure; apps are the product.
+
+Each launched app gets an independent native window with its own lifecycle,
+size, focus, input, audio, and display identity. Closing one app should not
+stop Android or disturb another app. The environment and installed app data
+persist quietly between launches.
+
+![Greenhouse managing two independent app windows](assets/independent-app-windows.png)
+
+<sub>The screenshots show the current native Mac prototype and its deterministic
+demo task surfaces. The real Android streaming path is implemented and is
+under Community Runtime acceptance testing.</sub>
+
+## Open by design
+
+Greenhouse is being built in public because the runtime should be inspectable,
+reproducible, and useful without a proprietary emulator stack.
+
+- The macOS host application is open source under Apache 2.0.
+- The Community Runtime is based on Android and LineageOS.
+- F-Droid and local APK installation are first-class distribution paths.
+- Optional Google API compatibility is provided through microG-compatible
+  services.
+- Runtime packages and source revisions are pinned and verified.
+- Android images, downloaded APKs, signing keys, and user data are never
+  committed to this repository.
+
+The Community Runtime does **not** bundle official Google Play or proprietary
+Google Mobile Services. A Google Play edition would require a legitimate
+licensing and certification agreement; Greenhouse will not disguise
+unlicensed Google software as an open-source feature.
+
+See [Community Runtime](docs/community-runtime.md),
+[runtime licensing](docs/runtime-licensing.md), and
+[third-party notices](THIRD_PARTY_NOTICES.md).
+
+## How it works
+
+```text
+Native Greenhouse Mac app
+        │
+        ├── app library, installation, windows, input, audio
+        │
+        ▼
+Open-source Android Emulator engine
+        │
+        ├── HVF acceleration on Apple Silicon
+        ├── ARM64 Goldfish/Ranchu virtual hardware
+        └── gfxstream and MoltenVK graphics path
+        │
+        ▼
+One persistent Community Runtime
+        │
+        └── one trusted Android virtual display per app
+                │
+                ├── MediaCodec video and app-scoped audio
+                ├── display-targeted keyboard, pointer, IME, and controller input
+                └── VideoToolbox decode into a Metal-backed Mac window
+```
+
+Greenhouse does not depend on Virtualization.framework scanouts. Android apps
+render into independent virtual displays, which are encoded in the guest and
+presented by native macOS windows.
+
+Read the [architecture](docs/architecture.md),
+[graphics design](docs/graphics-architecture.md), and
+[window integration design](docs/window-integration.md) for details.
+
+## Project status
+
+Greenhouse is an active development project, not yet an end-user release.
+
+The native Mac application, Ranchu runtime controller, private ADB transport,
+guest app-window agent, MediaCodec protocol, VideoToolbox/Metal presentation,
+and display-scoped input/audio plumbing are implemented. Two simultaneous
+accelerated virtual-display apps and persistent runtime lifecycle have been
+proven with a stock ARM64 AVD.
+
+The main remaining release work is building and validating the complete
+LineageOS Community Runtime, exercising real apps and games through the native
+window path, and completing signing, notarization, updates, compatibility
+testing, and distribution.
+
+Compatibility is intentionally honest:
+
+- Apple Silicon and macOS 15 or later.
+- ARM64, universal, or pure Java/Kotlin Android apps.
+- No Intel Mac or x86 Android app support.
+- No promise that DRM, anti-cheat, Play Integrity, or every phone hardware API
+  will work.
+- Official Google Play is not included in the Community Runtime.
+
+See the [product contract](docs/product-contract.md),
+[compatibility policy](docs/compatibility.md), and [roadmap](docs/roadmap.md).
+
+## Building Greenhouse
 
 Requirements:
 
 - Apple Silicon Mac
-- macOS 15.0 or later
+- macOS 15 or later
 - A current full Xcode installation
 
-Run:
+Build and launch the native prototype:
 
 ```bash
-./script/test.sh
 ./script/build_and_run.sh
 ```
 
-`test.sh` builds the Swift package, runs all tests, compiles the Android guest
-agent against pinned platform stubs, validates runtime metadata, and checks the
-Ranchu/app-window source contract.
+Run the complete local verification suite:
 
-`build_and_run.sh` is the main interactive command. It builds a SwiftPM
-executable, stages a local
-`dist/GreenhouseMac.app`, and launches it as a normal foreground Mac app. It
-uses the deterministic fake backend unless `GREENHOUSE_BACKEND=ranchu` is set,
-and supports `--verify`, `--debug`, `--logs`, and `--telemetry`.
+```bash
+./script/test.sh
+```
 
-## What Phase 1 proves
-
-- Backend-neutral runtime, VM, Android, Google-service, operation, and app-window
-  state models.
-- A deterministic fake backend covering the happy path and all roadmap failure
-  cases.
-- A SwiftUI app library, microG and F-Droid entry points, package picker, runtime
-  progress, diagnostics, and independent fake app windows.
-- Versioned NDJSON development events with unified logging and redaction.
-- Unit and integration tests plus repeatable local verification.
-
-## Phase 2 decision
-
-Virtualization.framework and generic QEMU/HVF were rejected because their
-tested macOS graphics paths did not provide the accelerated, independent
-Android surfaces Greenhouse needs. The decision is preserved in
-[ADR 0002](docs/adr/0002-platform-feasibility-no-go.md) and the
-[backend decision](docs/backend-decision.md); the disposable probe code is not
-part of the product repository.
-
-## What Phase 3 implements
-
-- ARM64 Goldfish/Ranchu instead of Cuttlefish.
-- Android Emulator engine launch with HVF and `-gpu host`
-  gfxstream/MoltenVK acceleration.
-- One trusted Android virtual display and MediaCodec stream per app.
-- VideoToolbox decoding into native Metal-backed Mac windows.
-- Display-scoped resize, focus, pointer, keyboard/IME text, audio, and
-  controller routing.
-- Isolated localhost ADB and persistent managed AVD userdata.
-- A reproducible two-app stock-AVD proof, JSON measurement report, and
-  50-cycle lifecycle/persistence soak.
-
-See [the Phase 3 Ranchu design and execution gate](docs/phase-3-ranchu.md).
-
-## Product boundaries
-
-The v1 contract targets macOS 15.0+ on Apple Silicon and ARM64 or universal
-Android apps. x86 Android apps, Intel Macs, every Android hardware feature, and
-universal compatibility with DRM, anti-cheat, or Play Integrity enforcement are
-not promised.
-
-The v1 Community Runtime uses microG-compatible services, F-Droid, and local
-packages. It does not include official Google Play or proprietary GMS. Licensed
-Google Play support remains a possible future distribution track.
-
-Read the [product contract](docs/product-contract.md) and
-[Community Runtime design](docs/community-runtime.md) before
-making compatibility or distribution claims.
+The normal development app uses a deterministic fake backend so the complete
+Mac experience and failure states can be exercised without downloading an
+Android image. Runtime acceptance tools and Community Runtime build
+instructions live in [Development](docs/development.md).
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). 
-Greenhouse host code is licensed under Apache 2.0.
+Contributions are welcome across Swift, Android platform code, graphics,
+streaming, input, accessibility, compatibility testing, documentation,
+packaging, and design.
+
+Start with [AGENTS.md](AGENTS.md) for the project’s working principles and
+[CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow. Security
+issues should follow [SECURITY.md](SECURITY.md).
+
+Greenhouse host code is licensed under the
+[Apache License 2.0](LICENSE-APACHE). Runtime components retain their own
+upstream licenses and redistribution obligations.
