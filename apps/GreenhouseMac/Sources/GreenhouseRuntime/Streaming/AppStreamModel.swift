@@ -21,6 +21,10 @@ public final class AppStreamModel {
     public private(set) var audioLatencyMilliseconds: Double?
     public private(set) var audioScope: String?
     public private(set) var audioPackageName: String?
+    public private(set) var isMuted = false
+    public private(set) var controllerConnected = false
+    public private(set) var controllerFocused = false
+    public private(set) var controllerName: String?
 
     private var recentPresentationTimes: [CMTime] = []
     private var recentDecodeLatencies: [Double] = []
@@ -66,6 +70,20 @@ public final class AppStreamModel {
     func setAudioScope(_ scope: String?, packageName: String?) {
         audioScope = scope
         audioPackageName = packageName
+    }
+
+    func setMuted(_ isMuted: Bool) {
+        self.isMuted = isMuted
+    }
+
+    func setControllerStatus(
+        connected: Bool,
+        focused: Bool,
+        name: String?
+    ) {
+        controllerConnected = connected
+        controllerFocused = focused
+        controllerName = name
     }
 
     func recordAudioLatency(_ milliseconds: Double?) {

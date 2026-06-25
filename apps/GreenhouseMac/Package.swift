@@ -43,7 +43,7 @@ let package = Package(
         ),
         .testTarget(
             name: "GreenhouseRuntimeTests",
-            dependencies: ["GreenhouseRuntime"],
+            dependencies: ["GreenhouseCore", "GreenhouseRuntime"],
             path: "Tests/GreenhouseRuntimeTests"
         )
     ],

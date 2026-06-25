@@ -49,6 +49,17 @@ extension GoogleServicesProvider {
     }
 }
 
+extension AndroidApp.Source {
+    var title: String {
+        switch self {
+        case .demo: "Demo"
+        case .communityStore: "Community store"
+        case .systemService: "System service"
+        case .localPackage: "Local package"
+        }
+    }
+}
+
 extension AppWindowState {
     var title: String {
         switch self {

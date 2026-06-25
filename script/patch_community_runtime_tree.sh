@@ -33,6 +33,32 @@ def remove_lineage_apn_package(relative_path: str) -> None:
         print(f"{relative_path}: duplicate apns-conf.xml package already absent")
 
 
+def remove_aosp_product_apn_copy() -> None:
+    relative_path = "build/make/target/product/aosp_product.mk"
+    path = root / relative_path
+    text = path.read_text()
+    block = (
+        "# Telephony:\n"
+        "#   Provide a APN configuration to GSI product\n"
+        "ifeq ($(LINEAGE_BUILD),)\n"
+        "PRODUCT_COPY_FILES += \\\n"
+        "    device/sample/etc/apns-full-conf.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/apns-conf.xml\n"
+        "endif\n"
+    )
+    replacement = (
+        "# Telephony:\n"
+        "# Greenhouse does not install the AOSP product APN copy because the\n"
+        "# emulator vendor APN copy is already provided by Goldfish/Ranchu.\n"
+    )
+    if block in text:
+        path.write_text(text.replace(block, replacement, 1))
+        print(f"{relative_path}: removed duplicate product apns-conf.xml copy")
+    elif "device/sample/etc/apns-full-conf.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/apns-conf.xml" in text:
+        raise SystemExit(f"{relative_path}: unexpected product apns-conf.xml copy form")
+    else:
+        print(f"{relative_path}: duplicate product apns-conf.xml copy already absent")
+
+
 def ensure_vendor_available(relative_path: str, module_name: str) -> None:
     path = root / relative_path
     lines = path.read_text().splitlines()
@@ -71,4 +97,5 @@ ensure_vendor_available("external/XMP-Toolkit-SDK/Android.bp", "zuid_md5")
 ensure_vendor_available("external/XMP-Toolkit-SDK/Android.bp", "xmp_toolkit_sdk")
 remove_lineage_apn_package("vendor/lineage/config/telephony.mk")
 remove_lineage_apn_package("vendor/lineage/config/data_only.mk")
+remove_aosp_product_apn_copy()
 PY

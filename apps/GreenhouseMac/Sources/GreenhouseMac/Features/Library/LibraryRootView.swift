@@ -8,6 +8,9 @@ struct LibraryRootView: View {
 
     @Environment(\.openWindow) private var openWindow
     @State private var showingImporter = false
+    @State private var searchText = ""
+    @State private var sortOrder = LibrarySortOrder.name
+    @State private var packageDropTargeted = false
 
     var body: some View {
         NavigationSplitView {
@@ -30,13 +33,15 @@ struct LibraryRootView: View {
                     OperationProgressCard(operation: model.snapshot.currentOperation)
                     LibraryContent(
                         model: model,
-                        appWindowCoordinator: appWindowCoordinator
+                        appWindowCoordinator: appWindowCoordinator,
+                        apps: visibleApps
                     )
                 }
                 .padding(24)
                 .frame(maxWidth: 900, alignment: .leading)
             }
             .navigationTitle("App Library")
+            .searchable(text: $searchText, prompt: "Search apps")
             .toolbar {
                 ToolbarItemGroup {
                     Button {
@@ -45,6 +50,16 @@ struct LibraryRootView: View {
                         Label("Install Package", systemImage: "shippingbox")
                     }
                     .disabled(model.snapshot.androidReadiness != .ready)
+
+                    Menu {
+                        Picker("Sort Apps", selection: $sortOrder) {
+                            ForEach(LibrarySortOrder.allCases) { order in
+                                Text(order.title).tag(order)
+                            }
+                        }
+                    } label: {
+                        Label(sortOrder.title, systemImage: "arrow.up.arrow.down")
+                    }
 
                     Button {
                         openWindow(id: "diagnostics")
@@ -60,6 +75,17 @@ struct LibraryRootView: View {
                     .disabled(model.snapshot.androidReadiness != .ready)
                 }
             }
+            .dropDestination(
+                for: URL.self,
+                action: dropPackages,
+                isTargeted: { packageDropTargeted = $0 }
+            )
+            .overlay {
+                if packageDropTargeted {
+                    PackageDropOverlay()
+                        .padding(24)
+                }
+            }
         }
         .fileImporter(
             isPresented: $showingImporter,
@@ -71,6 +97,38 @@ struct LibraryRootView: View {
                 await model.installPackage(at: url)
             }
         }
+    }
+
+    private var visibleApps: [AndroidApp] {
+        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let filtered: [AndroidApp]
+        if trimmed.isEmpty {
+            filtered = model.apps
+        } else {
+            filtered = model.apps.filter { app in
+                app.name.localizedCaseInsensitiveContains(trimmed) ||
+                    app.packageName.localizedCaseInsensitiveContains(trimmed)
+            }
+        }
+        return filtered.sorted { lhs, rhs in
+            sortOrder.sorted(lhs, rhs, model: model)
+        }
+    }
+
+    private func dropPackages(_ urls: [URL], location: CGPoint) -> Bool {
+        guard model.snapshot.androidReadiness == .ready else { return false }
+        let packages = urls.filter(Self.isSupportedPackage)
+        guard !packages.isEmpty else { return false }
+        Task {
+            for package in packages {
+                await model.installPackage(at: package)
+            }
+        }
+        return true
+    }
+
+    private static func isSupportedPackage(_ url: URL) -> Bool {
+        url.isFileURL && ["apk", "apks", "xapk"].contains(url.pathExtension.lowercased())
     }
 
     private static let packageTypes: [UTType] = [
@@ -225,6 +283,7 @@ private struct OperationProgressCard: View {
 private struct LibraryContent: View {
     let model: GreenhouseAppModel
     let appWindowCoordinator: AppWindowCoordinator
+    let apps: [AndroidApp]
 
     @Environment(\.openWindow) private var openWindow
 
@@ -242,16 +301,33 @@ private struct LibraryContent: View {
                     .disabled(model.snapshot.androidReadiness != .ready)
                 }
                 .frame(maxWidth: .infinity, minHeight: 260)
+            } else if apps.isEmpty {
+                ContentUnavailableView {
+                    Label("No matching apps", systemImage: "magnifyingglass")
+                } description: {
+                    Text("Try a different app name or package identifier.")
+                }
+                .frame(maxWidth: .infinity, minHeight: 240)
             } else {
-                Text("Installed Apps")
-                    .font(.headline)
+                HStack {
+                    Text("Installed Apps")
+                        .font(.headline)
+                    Spacer()
+                    Text("\(apps.count) \(apps.count == 1 ? "app" : "apps")")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
 
                 LazyVGrid(
                     columns: [GridItem(.adaptive(minimum: 210), spacing: 12)],
                     spacing: 12
                 ) {
-                    ForEach(model.apps) { app in
-                        AppLibraryTile(app: app, state: model.state(for: app)) {
+                    ForEach(apps) { app in
+                        AppLibraryTile(
+                            app: app,
+                            state: model.state(for: app),
+                            canOpen: model.snapshot.androidReadiness == .ready
+                        ) {
                             Task {
                                 if appWindowCoordinator.focusWindow(for: app.id) {
                                     return
@@ -266,6 +342,62 @@ private struct LibraryContent: View {
                 }
             }
         }
+    }
+}
+
+private enum LibrarySortOrder: String, CaseIterable, Identifiable {
+    case name
+    case source
+    case state
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .name: "Name"
+        case .source: "Source"
+        case .state: "State"
+        }
+    }
+
+    @MainActor
+    func sorted(_ lhs: AndroidApp, _ rhs: AndroidApp, model: GreenhouseAppModel) -> Bool {
+        switch self {
+        case .name:
+            return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+        case .source:
+            if lhs.source.title != rhs.source.title {
+                return lhs.source.title < rhs.source.title
+            }
+            return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+        case .state:
+            let leftState = model.state(for: lhs).title
+            let rightState = model.state(for: rhs).title
+            if leftState != rightState {
+                return leftState < rightState
+            }
+            return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+        }
+    }
+}
+
+private struct PackageDropOverlay: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .fill(.regularMaterial)
+            .overlay {
+                VStack(spacing: 10) {
+                    Image(systemName: "shippingbox.and.arrow.backward")
+                        .font(.system(size: 34))
+                    Text("Drop package to install")
+                        .font(.headline)
+                    Text("APK, APKS, and XAPK files are supported.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(28)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

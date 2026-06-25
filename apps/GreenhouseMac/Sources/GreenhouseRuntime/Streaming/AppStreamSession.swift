@@ -109,6 +109,20 @@ public final class AppStreamSession {
         try? sendJSON(kind: .focus, object: [:])
     }
 
+    public func pressAndroidKey(_ key: AndroidNavigationKey) {
+        pressAndroidKey(key.rawValue)
+    }
+
+    public func pressAndroidKey(_ keyCode: Int) {
+        key(action: 0, keyCode: keyCode)
+        key(action: 1, keyCode: keyCode)
+    }
+
+    public func setMuted(_ muted: Bool) {
+        model.setMuted(muted)
+        audio.setMuted(muted)
+    }
+
     public func resize(width: Int, height: Int, densityDpi: Int) {
         guard width > 0, height > 0, densityDpi > 0 else { return }
         try? sendJSON(

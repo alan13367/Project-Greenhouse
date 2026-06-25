@@ -8,20 +8,55 @@ struct AppWindowView: View {
     let streams: AppStreamRegistry
     let appWindowCoordinator: AppWindowCoordinator
 
+    @Environment(\.dismissWindow) private var dismissWindow
+    @SceneStorage("greenhouse.appWindow.controlsCollapsed") private var controlsCollapsed = false
+    @SceneStorage("greenhouse.appWindow.metricsVisible") private var metricsVisible = true
+
     var body: some View {
         if let session = streams.session(for: app.id) {
             LiveAppWindowView(
                 app: app,
                 model: model,
                 session: session,
-                appWindowCoordinator: appWindowCoordinator
+                appWindowCoordinator: appWindowCoordinator,
+                controlsCollapsed: $controlsCollapsed,
+                metricsVisible: $metricsVisible,
+                focus: {
+                    _ = appWindowCoordinator.focusWindow(for: app.id)
+                    session.focus()
+                },
+                reconnect: reconnect,
+                toggleFullScreen: {
+                    appWindowCoordinator.toggleFullScreen(for: app.id)
+                },
+                closeWindow: {
+                    dismissWindow(value: app.id)
+                }
             )
         } else {
             FakeAppWindowView(
                 app: app,
                 model: model,
-                appWindowCoordinator: appWindowCoordinator
+                appWindowCoordinator: appWindowCoordinator,
+                controlsCollapsed: $controlsCollapsed,
+                metricsVisible: $metricsVisible,
+                focus: {
+                    _ = appWindowCoordinator.focusWindow(for: app.id)
+                },
+                reconnect: reconnect,
+                toggleFullScreen: {
+                    appWindowCoordinator.toggleFullScreen(for: app.id)
+                },
+                closeWindow: {
+                    dismissWindow(value: app.id)
+                }
             )
+        }
+    }
+
+    private func reconnect() {
+        Task {
+            _ = await model.openApp(app)
         }
     }
 }
@@ -31,25 +66,55 @@ private struct LiveAppWindowView: View {
     let model: GreenhouseAppModel
     let session: AppStreamSession
     let appWindowCoordinator: AppWindowCoordinator
+    @Binding var controlsCollapsed: Bool
+    @Binding var metricsVisible: Bool
+    let focus: () -> Void
+    let reconnect: () -> Void
+    let toggleFullScreen: () -> Void
+    let closeWindow: () -> Void
 
     @Environment(\.dismissWindow) private var dismissWindow
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            MetalAppSurface(session: session)
-                .ignoresSafeArea()
+        HStack(spacing: 0) {
+            ZStack {
+                MetalAppSurface(session: session)
+                    .ignoresSafeArea()
 
-            if let error = session.model.errorMessage {
-                StreamErrorBadge(message: error)
-                    .padding(12)
-            }
+                if let error = session.model.errorMessage {
+                    StreamErrorBadge(message: error)
+                        .padding(.top, 12)
+                        .padding(.trailing, controlsCollapsed ? 62 : 12)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                }
 
-            VStack {
-                Spacer()
-                StreamMetricsOverlay(stream: session.model)
-                    .padding(12)
+                if metricsVisible {
+                    StreamMetricsOverlay(stream: session.model)
+                        .padding(12)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                }
+
+                if controlsCollapsed {
+                    CollapsedAppWindowControlsButton(isCollapsed: $controlsCollapsed)
+                        .padding(12)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            if !controlsCollapsed {
+                AppWindowControlsRail(
+                    app: app,
+                    session: session,
+                    canReconnect: model.snapshot.androidReadiness == .ready,
+                    isCollapsed: $controlsCollapsed,
+                    metricsVisible: $metricsVisible,
+                    focus: focus,
+                    reconnect: reconnect,
+                    toggleFullScreen: toggleFullScreen,
+                    close: closeWindow
+                )
+            }
         }
         .navigationTitle(app.name)
         .background {

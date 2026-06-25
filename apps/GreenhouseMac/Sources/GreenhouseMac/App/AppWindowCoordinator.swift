@@ -33,11 +33,7 @@ final class AppWindowCoordinator {
 
     @discardableResult
     func focusWindow(for appID: AndroidAppID) -> Bool {
-        guard let window = windows[appID]?.window else {
-            windows.removeValue(forKey: appID)
-            return false
-        }
-        guard window.isVisible || window.isMiniaturized else {
+        guard let window = activeWindow(for: appID) else {
             windows.removeValue(forKey: appID)
             return false
         }
@@ -50,6 +46,19 @@ final class AppWindowCoordinator {
         return true
     }
 
+    func toggleFullScreen(for appID: AndroidAppID) {
+        guard let window = activeWindow(for: appID) else {
+            windows.removeValue(forKey: appID)
+            return
+        }
+        if window.isMiniaturized {
+            window.deminiaturize(nil)
+        }
+        NSApp.activate()
+        window.makeKeyAndOrderFront(nil)
+        window.toggleFullScreen(nil)
+    }
+
     func register(_ window: NSWindow, for appID: AndroidAppID) {
         windows[appID] = WindowReference(window)
         pendingAppIDs.remove(appID)
@@ -60,6 +69,14 @@ final class AppWindowCoordinator {
             return
         }
         windows.removeValue(forKey: appID)
+    }
+
+    private func activeWindow(for appID: AndroidAppID) -> NSWindow? {
+        guard let window = windows[appID]?.window,
+              window.isVisible || window.isMiniaturized else {
+            return nil
+        }
+        return window
     }
 }
 

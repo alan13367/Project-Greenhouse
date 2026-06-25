@@ -6,6 +6,7 @@ final class AudioPlaybackEngine {
     private let engine = AVAudioEngine()
     private let player = AVAudioPlayerNode()
     private var format: AVAudioFormat?
+    private var muted = false
 
     init() {
         engine.attach(player)
@@ -28,7 +29,13 @@ final class AudioPlaybackEngine {
         engine.connect(player, to: engine.mainMixerNode, format: format)
         try engine.start()
         player.play()
+        player.volume = muted ? 0 : 1
         self.format = format
+    }
+
+    func setMuted(_ muted: Bool) {
+        self.muted = muted
+        player.volume = muted ? 0 : 1
     }
 
     func enqueue(_ pcm: Data) throws {

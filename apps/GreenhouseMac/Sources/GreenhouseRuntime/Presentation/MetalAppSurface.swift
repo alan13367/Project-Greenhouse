@@ -463,6 +463,17 @@ private final class ControllerRouter {
                 }
             }
         )
+        observers.append(
+            center.addObserver(
+                forName: .GCControllerDidDisconnect,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.updateFocusedSessionStatus(focused: true)
+                }
+            }
+        )
         for controller in GCController.controllers() {
             configure(controller)
         }
@@ -474,16 +485,19 @@ private final class ControllerRouter {
             lastButtonMask = 0
         }
         self.session = session
+        updateFocusedSessionStatus(focused: true)
     }
 
     func blur(_ session: AppStreamSession) {
         if self.session === session {
+            updateFocusedSessionStatus(focused: false)
             self.session = nil
         }
     }
 
     private func configure(_ controller: GCController?) {
         guard let gamepad = controller?.extendedGamepad else { return }
+        updateFocusedSessionStatus(focused: session != nil)
         gamepad.valueChangedHandler = { [weak self] gamepad, _ in
             Task { @MainActor in
                 guard let self else { return }
@@ -507,6 +521,15 @@ private final class ControllerRouter {
                 ])
             }
         }
+    }
+
+    private func updateFocusedSessionStatus(focused: Bool) {
+        let controller = GCController.controllers().first
+        session?.model.setControllerStatus(
+            connected: controller != nil,
+            focused: focused && controller != nil,
+            name: controller?.vendorName
+        )
     }
 
     private static func buttonMask(_ gamepad: GCExtendedGamepad) -> Int {
