@@ -89,7 +89,7 @@ if ! git -C "$VENDOR_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git clone --filter=blob:none --no-checkout "$INTEGRATION_REPOSITORY" "$VENDOR_DIR"
 fi
 
-git -C "$VENDOR_DIR" fetch --depth=1 origin "$INTEGRATION_REVISION"
+git -C "$VENDOR_DIR" fetch --depth=1 "$INTEGRATION_REPOSITORY" "$INTEGRATION_REVISION"
 git -C "$VENDOR_DIR" checkout --detach "$INTEGRATION_REVISION"
 
 python3 - "$LOCK_FILE" "$VENDOR_DIR" <<'PY'

@@ -27,8 +27,12 @@ ANDROID_ROOT="$(cd "$ANDROID_ROOT" && pwd)"
 AVAILABLE_KIB="$(df -Pk "$ANDROID_ROOT" | awk 'NR == 2 {print $4}')"
 REQUIRED_KIB=$((300 * 1024 * 1024))
 if (( AVAILABLE_KIB < REQUIRED_KIB )); then
-  echo "At least 300 GiB free is required for the LineageOS worktree." >&2
-  exit 70
+  if [[ "${GREENHOUSE_RESUME_BUILD:-0}" == "1" && -d "$ANDROID_ROOT/.repo" ]]; then
+    echo "Resuming existing LineageOS worktree with less than 300 GiB free." >&2
+  else
+    echo "At least 300 GiB free is required for the LineageOS worktree." >&2
+    exit 70
+  fi
 fi
 
 MANIFEST_REPOSITORY="$(
@@ -53,17 +57,31 @@ mkdir -p .repo/local_manifests
 cp "$ROOT_DIR/guest/community-runtime/local-manifests/greenhouse.xml" \
   .repo/local_manifests/greenhouse.xml
 
-repo sync -c -j"${GREENHOUSE_SYNC_JOBS:-8}" --fail-fast
+if [[ "${GREENHOUSE_SKIP_SYNC:-0}" == "1" ]]; then
+  echo "Skipping repo sync for existing LineageOS worktree."
+else
+  repo sync -c -j"${GREENHOUSE_SYNC_JOBS:-8}" --fail-fast --no-manifest-update
+fi
 "$ROOT_DIR/script/fetch_community_runtime.sh" --prepare-tree "$ANDROID_ROOT"
+"$ROOT_DIR/script/patch_community_runtime_tree.sh" "$ANDROID_ROOT"
 
 mkdir -p "$ROOT_DIR/artifacts/community-runtime/manifests"
 repo manifest -r -o \
   "$ROOT_DIR/artifacts/community-runtime/manifests/lineage-23.2-revision-locked.xml"
 
 export WITH_GMS=true
+set +u
 source build/envsetup.sh
-lunch greenhouse_sdk_phone_arm64-userdebug
+lunch greenhouse_sdk_phone_arm64 trunk_staging userdebug
+if [[ "${TARGET_PRODUCT:-}" != "greenhouse_sdk_phone_arm64" ||
+      "${TARGET_RELEASE:-}" != "trunk_staging" ||
+      "${TARGET_BUILD_VARIANT:-}" != "userdebug" ||
+      -z "${OUT:-}" ]]; then
+  echo "Failed to configure greenhouse_sdk_phone_arm64 trunk_staging userdebug." >&2
+  exit 70
+fi
 m -j"${GREENHOUSE_BUILD_JOBS:-$(nproc)}"
+set -u
 
 mkdir -p "$ROOT_DIR/artifacts/community-runtime/build-metadata"
 cp "$OUT/build_number.txt" \
